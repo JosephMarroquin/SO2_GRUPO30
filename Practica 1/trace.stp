@@ -1,0 +1,19 @@
+#!/usr/bin/stap
+
+probe syscall.open {
+    if (pid() == $1) {
+        printf("PID[%d] -> Open at %s\n", pid(), ctime(gettimeofday_s()));
+    }
+}
+
+probe syscall.read {
+    if(pid() == $1){
+        printf("PID[%d] -> Read at %s\n", pid(), ctime(gettimeofday_s()));
+    }
+}
+
+probe syscall.write {
+    if(pid() == $1){
+        printf("PID[%d] -> Write at %s\n", pid(), ctime(gettimeofday_s()));
+    }
+}
