@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 
 #define FILE_NAME "practica1.txt"
-#define BUFFER_SIZE 8
+#define BUFFER_SIZE 9
 
 // Función para generar un carácter alfanumérico aleatorio
 char generate_random_char() {
