@@ -85,7 +85,7 @@ int main(){
         arg_Ptr1[2] = " Soy el proceso hijo 1! ";
         arg_Ptr1[3] = NULL;
 
-        execv("/home/joseph/Documents/practica1/child.bin", arg_Ptr1);
+        execv("/home/jorge/Documentos/SO2_GRUPO30/Practica 1/child.bin", arg_Ptr1);
 
     } else {
         pid2 = fork();
@@ -114,7 +114,7 @@ int main(){
             arg_Ptr2[2] = " Soy el proceso hijo 2! ";
             arg_Ptr2[3] = NULL;
 
-            execv("/home/joseph/Documents/practica1/child.bin", arg_Ptr2);
+            execv("/home/jorge/Documentos/SO2_GRUPO30/Practica 1/child.bin", arg_Ptr2);
 
         } else {
             // Proceso padre
