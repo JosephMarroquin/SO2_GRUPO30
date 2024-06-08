@@ -10,7 +10,7 @@
 
 Código para crear los procesos hijos donde se obtiene su PID para posteriormente construir el comando para ejecutar el script de Systemtap y enviarle el PID como argumento para que lo pueda buscar e ir guardando sus datos en el archivo de syscalls.log, este código se utiliza para ambos procesos hijos
 
-id1 = fork();
+    id1 = fork();
 
     if(pid1 == -1){
         perror("fork");
@@ -38,9 +38,8 @@ id1 = fork();
 
         execv("/home/jorge/Documentos/SO2_GRUPO30/Practica 1/child.bin", arg_Ptr1);
 
-    }
-
-En este código se imprime el identificador del padre y se queda en espera a que los procesos hijos se terminen, cuando estos han terminado imprime que los procesos hijos han terminado y después termina el proceso padre.    
+    } 
+    En este código se imprime el identificador del padre y se queda en espera a que los procesos hijos se terminen, cuando estos han terminado imprime que los procesos hijos han terminado y después termina el proceso padre.    
 
             printf("Soy el proceso padre\n");
             printf("Mi PID es: %d\n\n", getpid());
@@ -67,7 +66,7 @@ En este código se imprime el identificador del padre y se queda en espera a que
 
     En este código se abre el archivo de practica1.txt en modo escritura para que los procesos puedan leerlo y así simular los subprocesos de estos haciendo llamadas al sistema todo esto de manera aleatorio con un tiempo de 1 a 3 segundos cada llamada.
 
- int file_descriptor = open(FILE_NAME, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+     int file_descriptor = open(FILE_NAME, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     if (file_descriptor == -1) {
         perror("Error al abrir/crear el archivo");
         return 1;
@@ -108,49 +107,49 @@ En este código se imprime el identificador del padre y se queda en espera a que
 
 ## Script SystemTap
 
-Script creado con systemtap donde hace llamadas de open, read, write al sistema enviandole el PID y al encontrar este proceso imprime la llamada que se está haciendo junto con la fecha en que se hizo.
+    Script creado con systemtap donde hace llamadas de open, read, write al sistema enviandole el PID y al encontrar este proceso imprime la llamada que se está haciendo junto con la fecha en que se hizo.
 
-#!/usr/bin/stap
+        #!/usr/bin/stap
 
-probe syscall.open {
-    if (pid() == $1) {
-        printf("PID[%d] -> Open at %s\n", pid(), ctime(gettimeofday_s()));
-    }
-}
+        probe syscall.open {
+            if (pid() == $1) {
+                printf("PID[%d] -> Open at %s\n", pid(), ctime(gettimeofday_s()));
+            }
+        }
 
-probe syscall.read {
-    if(pid() == $1){
-        printf("PID[%d] -> Read at %s\n", pid(), ctime(gettimeofday_s()));
-    }
-}
+        probe syscall.read {
+            if(pid() == $1){
+                printf("PID[%d] -> Read at %s\n", pid(), ctime(gettimeofday_s()));
+            }
+        }
 
-probe syscall.write {
-    if(pid() == $1){
-        printf("PID[%d] -> Write at %s\n", pid(), ctime(gettimeofday_s()));
-    }
-}
+        probe syscall.write {
+            if(pid() == $1){
+                printf("PID[%d] -> Write at %s\n", pid(), ctime(gettimeofday_s()));
+            }
+        }
 
 
 ## Archivo syscall.log
 
-Resultado de los logs de los procesos creados con la información de la llamada incluyendo el nombre del proceso, la fecha y hora.
+    Resultado de los logs de los procesos creados con la información de la llamada incluyendo el nombre del proceso, la fecha y hora.
 
-PID[12115] -> Read at Sat Jun  8 19:58:18 2024
-PID[12117] -> Read at Sat Jun  8 19:58:18 2024
-PID[12115] -> Read at Sat Jun  8 19:58:19 2024
-PID[12117] -> Read at Sat Jun  8 19:58:19 2024
-PID[12115] -> Write at Sat Jun  8 19:58:22 2024
+        PID[12115] -> Read at Sat Jun  8 19:58:18 2024
+        PID[12117] -> Read at Sat Jun  8 19:58:18 2024
+        PID[12115] -> Read at Sat Jun  8 19:58:19 2024
+        PID[12117] -> Read at Sat Jun  8 19:58:19 2024
+        PID[12115] -> Write at Sat Jun  8 19:58:22 2024
 
 
 ## Archivo practica1.txt
 
-Archivo donde se crean cadenas de texto aleatorias para que después puedan ser leídas por los procesos.
+    Archivo donde se crean cadenas de texto aleatorias para que después puedan ser leídas por los procesos.
 
-9wVIViMP
-8By51EIh
-fgScBCIm
-1sEZT2SJ
-QzAu9pQc
-SWXhuMxW
-MubqxwPz
-Xgok0PrD
+        9wVIViMP
+        8By51EIh
+        fgScBCIm
+        1sEZT2SJ
+        QzAu9pQc
+        SWXhuMxW
+        MubqxwPz
+        Xgok0PrD
