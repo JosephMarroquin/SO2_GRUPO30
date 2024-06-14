@@ -207,11 +207,25 @@ int main() {
                 fseek(archivo, 0, SEEK_END);
                 long fileSize = ftell(archivo);
                 fseek(archivo, 0, SEEK_SET);
+
+                char *jsonData = (char *)malloc(fileSize + 1);
+                fread(jsonData, 1, fileSize, archivo);
                 fclose(archivo);
 
-                // Calcular la cantidad de usuarios en el archivo
-                int totalUsuarios = fileSize / (sizeof(int) + sizeof(char[50]) + sizeof(float));
-                printf("Total de usuarios en el archivo: %d\n", totalUsuarios);
+                // Parsear el JSON
+                cJSON *json = cJSON_Parse(jsonData);
+                if (json == NULL) {
+                    // Manejar el error de parsing
+                    printf("Error al parsear el JSON.\n");
+                    free(jsonData); // Liberar la memoria
+                    return 1;
+                }
+
+                // Obtener el número de elementos en el array JSON
+                int totalUsuarios = cJSON_GetArraySize(json);
+                //printf("Total de usuarios en el archivo: %d\n", totalUsuarios);
+                cJSON_Delete(json);
+                free(jsonData);
 
                 // Calcular cuántos usuarios debe cargar cada hilo
                 int usuariosPorHilo = totalUsuarios / 3;
