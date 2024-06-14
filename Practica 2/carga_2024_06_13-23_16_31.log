@@ -1,0 +1,23 @@
+Fecha: Thu Jun 13 23:16:31 2024
+Usuarios Cargados:
+Hilo 1: 33
+Hilo 2: 28
+Hilo 3: 32
+Total de Usuarios Cargados: 93
+Errores:
+- Linea #7: Formato de datos incorrecto en el JSON
+- Linea #18: Saldo introducido no es un número real positivo
+- Linea #23: Formato de datos incorrecto en el JSON
+- Linea #28: Número de cuenta duplicado
+- Linea #69: Saldo introducido no es un número real positivo
+- Linea #90: Formato de datos incorrecto en el JSON
+- Linea #98: Número de cuenta duplicado
+- Linea #99: Saldo introducido no es un número real positivo
+- Linea #35: Número de cuenta duplicado
+- Linea #36: Número de cuenta duplicado
+- Linea #37: Número de cuenta duplicado
+- Linea #41: Saldo introducido no es un número real positivo
+- Linea #55: Número de cuenta duplicado
+- Linea #58: Número de cuenta duplicado
+- Linea #68: Saldo introducido no es un número real positivo
+- Linea #68: Número de cuenta duplicado

@@ -199,23 +199,98 @@ void generarReporte(int totalCargados, int *cargadosPorHilo, int errorCount, cha
     fclose(reporte);
 }
 
+
+void realizarDeposito(Nodo *listaClientes, int no_cuenta, double monto) {
+    Nodo *actual = listaClientes;
+
+    // Buscar el cliente según el número de cuenta
+    while (actual != NULL) {
+        if (actual->cliente.no_cuenta == no_cuenta) {
+            // Realizar el depósito
+            actual->cliente.saldo += monto;
+            printf("----------------------------------\n");
+            printf("Depósito de %.2f realizado correctamente en la cuenta %d.\n", monto, no_cuenta);
+            printf("----------------------------------\n");
+            return;
+        }
+        actual = actual->siguiente;
+    }
+
+    // Si el número de cuenta no se encuentra en la lista
+    printf("No se encontró la cuenta con número %d. El depósito no pudo ser realizado.\n", no_cuenta);
+}
+
+
+void realizarRetiro(Nodo *listaClientes, int no_cuenta, double monto) {
+    Nodo *actual = listaClientes;
+
+    // Buscar el cliente según el número de cuenta
+    while (actual != NULL) {
+        if (actual->cliente.no_cuenta == no_cuenta) {
+            // Verificar si el cliente tiene suficiente saldo para el retiro
+            if (actual->cliente.saldo >= monto) {
+                // Realizar el retiro
+                actual->cliente.saldo -= monto;
+                printf("----------------------------------\n");
+                printf("Retiro de %.2f realizado correctamente en la cuenta %d.\n", monto, no_cuenta);
+                printf("----------------------------------\n");
+            } else {
+                printf("El cliente con cuenta %d no tiene suficiente saldo para realizar el retiro de %.2f.\n", no_cuenta, monto);
+            }
+            return;
+        }
+        actual = actual->siguiente;
+    }
+
+    // Si el número de cuenta no se encuentra en la lista
+    printf("No se encontró la cuenta con número %d. El retiro no pudo ser realizado.\n", no_cuenta);
+}
+
+
+void consultar_cuenta (Nodo *listaClientes, int no_cuenta) {
+    Nodo *actual = listaClientes;
+
+    // Buscar el cliente según el número de cuenta
+    while (actual != NULL) {
+        if (actual->cliente.no_cuenta == no_cuenta) {
+            printf("----------------------------------\n");
+            printf("Información de la cuenta:\n");
+            printf("Número de cuenta: %d\n", actual->cliente.no_cuenta);
+            printf("Nombre: %s\n", actual->cliente.nombre);
+            printf("Saldo: %.2f\n", actual->cliente.saldo);
+            printf("----------------------------------\n");
+            
+            return;
+        }
+        actual = actual->siguiente;
+    }
+
+    // Si el número de cuenta no se encuentra en la lista
+    printf("No se encontró la cuenta con número %d. El retiro no pudo ser realizado.\n", no_cuenta);
+}
+
 int main() {
     int opcion;
     Nodo *listaClientes = NULL; // Lista para almacenar los clientes del JSON
 
     do {
+        printf("\n++++++++++++++++++++++++++++++++++++++++\n");
         printf("\nMenú:\n");
-        printf("1. Carga masiva de usuarios\n");
+        printf("\n1. Carga masiva de usuarios\n");
         printf("2. Generar reporte Estado de cuentas\n");
-        printf("3. Salir\n");
+        printf("3. Operaciones\n");
+        printf("4. Salir\n");
+        printf("\n+++++++++++++++++++++++++++++++++++++++++\n");
         printf("Selecciona una opción: ");
         scanf("%d", &opcion);
+        getchar();
 
         switch(opcion) {
             case 1: {
                 char ruta[100];
                 printf("Introduce la ruta del archivo JSON: ");
-                scanf("%s", ruta);
+                fgets(ruta, sizeof(ruta), stdin);
+                ruta[strcspn(ruta, "\n")] = 0;
 
                 FILE *archivo;
                 archivo = fopen(ruta, "r");
@@ -279,18 +354,90 @@ int main() {
 
                 // Generar el reporte de carga
                 generarReporte(totalCargados, (int[]){args[0].cargados, args[1].cargados, args[2].cargados}, errorCount, errores);
+                printf("--------------------------------\n");
+                printf("Archivo Cargado Correctamente\n");
+                printf("--------------------------------\n");
                 break;
             }
             case 2:
                 imprimirLista(listaClientes);
                 break;
             case 3:
-                printf("Saliendo del programa.\n");
+                int opcionOperaciones;
+                int no_cuenta;
+                int no_cuenta2;
+                double monto;
+
+                do {
+                    printf("*************************************\n");
+                    printf("\nOperaciones:\n");
+                    printf("\n1. Depósito\n");
+                    printf("2. Retiro\n");
+                    printf("3. Transferencia\n");
+                    printf("4. Consultar cuenta\n");
+                    printf("5. Regresar al menú principal\n");
+                    printf("\n*************************************\n");
+                    printf("Selecciona una opción: ");
+                    scanf("%d", &opcionOperaciones);
+
+                    switch (opcionOperaciones) {
+                        case 1:
+                            printf("Seleccionaste Depósito.\n");
+                           
+                            printf("Introduce el número de cuenta: ");
+                            scanf("%d", &no_cuenta);
+                            printf("Introduce el monto a depositar: ");
+                            scanf("%lf", &monto);
+                            realizarDeposito(listaClientes, no_cuenta, monto);
+                            break;
+                        case 2:
+                            printf("Seleccionaste Retiro.\n");
+                            
+
+                            printf("Introduce el número de cuenta: ");
+                            scanf("%d", &no_cuenta);
+                            printf("Introduce el monto a retirar: ");
+                            scanf("%lf", &monto);
+                            realizarRetiro(listaClientes, no_cuenta, monto);
+                            break;
+                        case 3:
+                            printf("Seleccionaste Transferencia\n");
+                            
+                            printf("Introduce el número de cuenta donde se retirará: ");
+                            scanf("%d", &no_cuenta);
+                            printf("Introduce el número de cuenta donde se depositará: ");
+                            scanf("%d", &no_cuenta2);
+                            printf("Introduce el monto a transferir: ");
+                            scanf("%lf", &monto);
+                            realizarRetiro(listaClientes, no_cuenta, monto);
+                            realizarDeposito(listaClientes, no_cuenta2, monto);
+
+                            break;
+                        case 4:
+                        printf("----------------------------------\n");
+                           printf("Seleccionaste Consultar Cuenta\n");
+                           printf("Introduce el numero de cuenta: ");
+                            scanf("%d", &no_cuenta);
+                            consultar_cuenta(listaClientes, no_cuenta);
+
+                            
+                            break;
+                        case 5:
+                            printf("Regresando al menú principal.\n");
+                            break;
+                        default:
+                            printf("Opción no válida. Por favor, selecciona una opción válida.\n");
+                            break;
+                    }
+                } while (opcionOperaciones != 5);
                 break;
+            case 4:
+                printf("Saliendo del programa.\n");
+                break;    
             default:
                 printf("Opción no válida. Por favor, selecciona una opción válida.\n");
         }
-    } while(opcion != 3);
+    } while(opcion != 4);
 
     // Liberamos la memoria de la lista antes de salir
     while (listaClientes != NULL) {
