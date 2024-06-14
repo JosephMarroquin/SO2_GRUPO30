@@ -138,14 +138,35 @@ void *leerJSON(void *arg) {
     pthread_exit(NULL);
 }
 
-// Función para imprimir la lista de clientes
-void imprimirLista(Nodo *lista) {
+// Función para escribir la lista de clientes en un archivo JSON 
+void escribirListaEnJSON(Nodo *lista) {
+    const char *nombreArchivo = "estado_cuentas.json"; 
+    FILE *archivo = fopen(nombreArchivo, "w");
+    if (archivo == NULL) {
+        printf("No se pudo abrir el archivo para escritura.\n");
+        return;
+    }
+
+    fprintf(archivo, "[\n");
     Nodo *actual = lista;
-    printf("Clientes:\n");
     while (actual != NULL) {
-        printf("No. Cuenta: %d, Nombre: %s, Saldo: %.2f\n", actual->cliente.no_cuenta, actual->cliente.nombre, actual->cliente.saldo);
+        fprintf(archivo, "  {\n");
+        fprintf(archivo, "    \"no_cuenta\": %d,\n", actual->cliente.no_cuenta);
+        fprintf(archivo, "    \"nombre\": \"%s\",\n", actual->cliente.nombre);
+        fprintf(archivo, "    \"saldo\": %.2f\n", actual->cliente.saldo);
+        fprintf(archivo, "  }%s\n", (actual->siguiente != NULL) ? "," : "");
         actual = actual->siguiente;
     }
+    fprintf(archivo, "]\n");
+
+    fclose(archivo);
+}
+
+// Función para imprimir la lista de clientes
+void imprimirLista(Nodo *lista) {
+    printf("Guardando la lista de clientes en el archivo JSON 'estado_cuentas.json'...\n");
+    escribirListaEnJSON(lista);
+    printf("La lista de clientes se ha guardado correctamente en el archivo JSON 'estado_cuentas.json'.\n");
 }
 
 // Función para generar el reporte de carga
@@ -184,8 +205,8 @@ int main() {
 
     do {
         printf("\nMenú:\n");
-        printf("1. Leer contenido de un archivo JSON\n");
-        printf("2. Mostrar lista de clientes\n");
+        printf("1. Carga masiva de usuarios\n");
+        printf("2. Generar reporte Estado de cuentas\n");
         printf("3. Salir\n");
         printf("Selecciona una opción: ");
         scanf("%d", &opcion);
