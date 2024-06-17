@@ -116,107 +116,9 @@ void write_report() {
     fclose(report_file);
 }
 
-// Función que ejecuta cada hilo
-void *thread_function(void *arg) {
-    char *filename = (char *)arg;
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        perror("Error al abrir el archivo");
-        pthread_exit(NULL);
-    }
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    char *json_data = (char *)malloc(file_size + 1);
-    if (!json_data) {
-        fclose(file);
-        perror("Error al reservar memoria para json_data");
-        pthread_exit(NULL);
-    }
-    fread(json_data, 1, file_size, file);
-    fclose(file);
-    json_data[file_size] = '\0'; // Añadir terminador nulo al final del JSON
-    cJSON *root = cJSON_Parse(json_data);
-    free(json_data);
-    if (!root) {
-        const char *error_ptr = cJSON_GetErrorPtr();
-        if (error_ptr != NULL) {
-            fprintf(stderr, "Error antes de: %s\n", error_ptr);
-        }
-        pthread_exit(NULL);
-    }
-    int num_operations = cJSON_GetArraySize(root);
-    if (num_operations <= 0) {
-        cJSON_Delete(root);
-        fprintf(stderr, "Error: El JSON no contiene operaciones válidas.\n");
-        pthread_exit(NULL);
-    }
-    for (int i = 0; i < num_operations; ++i) {
-        cJSON *op_item = cJSON_GetArrayItem(root, i);
-        Operation op;
-        cJSON *operacion = cJSON_GetObjectItem(op_item, "operacion");
-        cJSON *cuenta1 = cJSON_GetObjectItem(op_item, "cuenta1");
-        cJSON *cuenta2 = cJSON_GetObjectItem(op_item, "cuenta2");
-        cJSON *monto = cJSON_GetObjectItem(op_item, "monto");
-        if (!operacion || !cuenta1 || !cuenta2 || !monto) {
-            cJSON_Delete(root);
-            fprintf(stderr, "Error: Alguno de los campos de la operación es nulo.\n");
-            pthread_exit(NULL);
-        }
-        op.operacion = operacion->valueint;
-        op.cuenta1 = cuenta1->valueint;
-        op.cuenta2 = cuenta2->valueint;
-        op.monto = monto->valuedouble;
-        
-        // Validar la operación y procesarla
-        pthread_mutex_lock(&lock);
-        total_operations++;
-        pthread_mutex_unlock(&lock);
-        if (op.monto <= 0) {
-            register_error(__LINE__, "Monto no es válido");
-continue;
-}
-        switch (op.operacion) {
-            case 1:
-                // Depósito
-                pthread_mutex_lock(&lock);
-                total_depositos++;
-                thread_operations[i % 4]++;
-                pthread_mutex_unlock(&lock);
-                break;
-            case 2:
-                // Retiro
-                pthread_mutex_lock(&lock);
-                total_retiros++;
-                thread_operations[i % 4]++;
-                pthread_mutex_unlock(&lock);
-                break;
-            case 3:
-                // Transferencia
-                pthread_mutex_lock(&lock);
-                total_transferencias++;
-                thread_operations[i % 4]++;
-                pthread_mutex_unlock(&lock);
-                break;
-            default:
-                // Operación inválida
-                register_error(__LINE__, "Operación no válida");
-                break;
-        }
-        
-        // Simulamos un proceso que toma un tiempo
-        //process_operation(&op);
-        
-        // Imprimir los valores de la operación de manera sincronizada
-        pthread_mutex_lock(&lock);
-        printf("Operacion: %d, Cuenta1: %d, Cuenta2: %d, Monto: %.2f\n",
-                op.operacion, op.cuenta1, op.cuenta2, op.monto);
-        pthread_mutex_unlock(&lock);
-    }
-    
-    cJSON_Delete(root);
-    pthread_exit(NULL);
-}
+
+
+
 
 
 // Función para leer el contenido del archivo JSON y almacenar los datos en la lista
@@ -420,6 +322,61 @@ void realizarRetiro(Nodo *listaClientes, int no_cuenta, double monto) {
     printf("No se encontró la cuenta con número %d. El retiro no pudo ser realizado.\n", no_cuenta);
 }
 
+void transferencia(Nodo *listaClientes, int cuenta_origen, int cuenta_destino, double monto) {
+    Nodo *actual = listaClientes;
+    Nodo *cliente_origen = NULL;
+    Nodo *cliente_destino = NULL;
+
+    
+    while (actual != NULL) {
+        if (actual->cliente.no_cuenta == cuenta_origen) {
+            cliente_origen = actual;
+        }
+        if (actual->cliente.no_cuenta == cuenta_destino) {
+            cliente_destino = actual;
+        }
+
+       
+        if (cliente_origen != NULL && cliente_destino != NULL) {
+            break;
+        }
+
+        actual = actual->siguiente;
+    }
+
+    
+    if (cliente_origen == NULL) {
+        printf("No se encontró la cuenta de origen con número %d. La transferencia no pudo ser realizada.\n", cuenta_origen);
+        return;
+    }
+
+    if (cliente_destino == NULL) {
+        printf("No se encontró la cuenta de destino con número %d. La transferencia no pudo ser realizada.\n", cuenta_destino);
+        return;
+    }
+
+    
+    if (cliente_origen->cliente.saldo >= monto) {
+        cliente_origen->cliente.saldo -= monto;
+        printf("----------------------------------\n");
+        printf("Retiro de %.2f realizado correctamente en la cuenta %d.\n", monto, cuenta_origen);
+        printf("----------------------------------\n");
+
+     
+        cliente_destino->cliente.saldo += monto;
+        printf("----------------------------------\n");
+        printf("Depósito de %.2f realizado correctamente en la cuenta %d.\n", monto, cuenta_destino);
+        printf("----------------------------------\n");
+
+        
+        printf("Transferencia de %.2f realizada con éxito desde la cuenta %d a la cuenta %d.\n", monto, cuenta_origen, cuenta_destino);
+    } else {
+        printf("La cuenta de origen con número %d no tiene suficiente saldo para realizar la transferencia de %.2f.\n", cuenta_origen, monto);
+    }
+}
+
+
+
 
 void consultar_cuenta (Nodo *listaClientes, int no_cuenta) {
     Nodo *actual = listaClientes;
@@ -441,6 +398,118 @@ void consultar_cuenta (Nodo *listaClientes, int no_cuenta) {
 
     // Si el número de cuenta no se encuentra en la lista
     printf("No se encontró la cuenta con número %d. El retiro no pudo ser realizado.\n", no_cuenta);
+}
+
+void *thread_function(void *arg) {
+
+    ThreadArgs *args = (ThreadArgs *)arg;
+    
+    Nodo **listaClientes = args->lista;
+
+    char *filename = (char *)arg;
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Error al abrir el archivo");
+        pthread_exit(NULL);
+    }
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char *json_data = (char *)malloc(file_size + 1);
+    if (!json_data) {
+        fclose(file);
+        perror("Error al reservar memoria para json_data");
+        pthread_exit(NULL);
+    }
+    fread(json_data, 1, file_size, file);
+    fclose(file);
+    json_data[file_size] = '\0'; // Añadir terminador nulo al final del JSON
+    cJSON *root = cJSON_Parse(json_data);
+    free(json_data);
+    if (!root) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != NULL) {
+            fprintf(stderr, "Error antes de: %s\n", error_ptr);
+        }
+        pthread_exit(NULL);
+    }
+    int num_operations = cJSON_GetArraySize(root);
+    if (num_operations <= 0) {
+        cJSON_Delete(root);
+        fprintf(stderr, "Error: El JSON no contiene operaciones válidas.\n");
+        pthread_exit(NULL);
+    }
+    for (int i = 0; i < num_operations; ++i) {
+        cJSON *op_item = cJSON_GetArrayItem(root, i);
+        Operation op;
+        cJSON *operacion = cJSON_GetObjectItem(op_item, "operacion");
+        cJSON *cuenta1 = cJSON_GetObjectItem(op_item, "cuenta1");
+        cJSON *cuenta2 = cJSON_GetObjectItem(op_item, "cuenta2");
+        cJSON *monto = cJSON_GetObjectItem(op_item, "monto");
+        if (!operacion || !cuenta1 || !cuenta2 || !monto) {
+            cJSON_Delete(root);
+            fprintf(stderr, "Error: Alguno de los campos de la operación es nulo.\n");
+            pthread_exit(NULL);
+        }
+        op.operacion = operacion->valueint;
+        op.cuenta1 = cuenta1->valueint;
+        op.cuenta2 = cuenta2->valueint;
+        op.monto = monto->valuedouble;
+        
+        // Validar la operación y procesarla
+        pthread_mutex_lock(&lock);
+        total_operations++;
+        pthread_mutex_unlock(&lock);
+        if (op.monto <= 0) {
+            register_error(__LINE__, "Monto no es válido");
+continue;
+}
+        switch (op.operacion) {
+            case 1:
+                // Depósito
+                pthread_mutex_lock(&lock);
+                total_depositos++;
+                thread_operations[i % 4]++;
+                //printf("Realizando depósito: cuenta1 = %d, monto = %.2f\n", op.cuenta1, op.monto);
+                realizarDeposito(*listaClientes,op.cuenta1,op.monto);
+                pthread_mutex_unlock(&lock);
+                break;
+            case 2:
+                // Retiro
+                pthread_mutex_lock(&lock);
+                total_retiros++;
+                thread_operations[i % 4]++;
+                realizarRetiro(*listaClientes, op.cuenta1, op.monto);
+                pthread_mutex_unlock(&lock);
+                break;
+            case 3:
+                // Transferencia
+                pthread_mutex_lock(&lock);
+                total_transferencias++;
+                thread_operations[i % 4]++;
+                //realizarRetiro(*listaClientes, op.cuenta1, op.monto);
+                //realizarDeposito(*listaClientes,op.cuenta2,op.monto);
+                transferencia(*listaClientes, op.cuenta1,op.cuenta2, op.monto);
+                pthread_mutex_unlock(&lock);
+                break;
+            default:
+                // Operación inválida
+                register_error(__LINE__, "Operación no válida");
+                break;
+        }
+        
+        // Simulamos un proceso que toma un tiempo
+        //process_operation(&op);
+        
+        // Imprimir los valores de la operación de manera sincronizada
+        pthread_mutex_lock(&lock);
+        //printf("Operacion: %d, Cuenta1: %d, Cuenta2: %d, Monto: %.2f\n",
+        //        op.operacion, op.cuenta1, op.cuenta2, op.monto);
+        pthread_mutex_unlock(&lock);
+    }
+    
+    cJSON_Delete(root);
+    pthread_exit(NULL);
 }
 
 int main() {
@@ -584,8 +653,9 @@ int main() {
                             scanf("%d", &no_cuenta2);
                             printf("Introduce el monto a transferir: ");
                             scanf("%lf", &monto);
-                            realizarRetiro(listaClientes, no_cuenta, monto);
-                            realizarDeposito(listaClientes, no_cuenta2, monto);
+                            transferencia(listaClientes, no_cuenta, no_cuenta2,monto);
+                            //realizarRetiro(listaClientes, no_cuenta, monto);
+                            //realizarDeposito(listaClientes, no_cuenta2, monto);
 
                             break;
                         case 4:
@@ -608,6 +678,7 @@ int main() {
                 break;
             case 4:
                 pthread_t threads[4];
+                ThreadArgs args[4];
                 pthread_mutex_init(&lock, NULL);
                 pthread_mutex_init(&report_lock, NULL);
                 char filename[100];
@@ -616,8 +687,11 @@ int main() {
                 fgets(filename, sizeof(filename), stdin);
                 filename[strcspn(filename, "\n")] = 0; // Eliminar el salto de línea
                 
+                
                 for (int i = 0; i < 4; ++i) {
-                    pthread_create(&threads[i], NULL, thread_function, filename);
+                    args[i].lista = &listaClientes;
+                    strcpy(args[i].ruta, filename);
+                    pthread_create(&threads[i], NULL, thread_function, &args[i]);
                 }
                 
                 for (int i = 0; i < 4; ++i) {
