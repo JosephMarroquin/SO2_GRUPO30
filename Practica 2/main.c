@@ -279,6 +279,13 @@ void generarReporte(int totalCargados, int *cargadosPorHilo, int errorCount, cha
 void realizarDeposito(Nodo *listaClientes, int no_cuenta, double monto) {
     Nodo *actual = listaClientes;
 
+    if (monto <= 0) {
+        printf("Error: El monto indicado debe ser mayor que 0.\n");
+        return;
+    }
+
+    
+
     // Buscar el cliente según el número de cuenta
     while (actual != NULL) {
         if (actual->cliente.no_cuenta == no_cuenta) {
@@ -299,6 +306,11 @@ void realizarDeposito(Nodo *listaClientes, int no_cuenta, double monto) {
 
 void realizarRetiro(Nodo *listaClientes, int no_cuenta, double monto) {
     Nodo *actual = listaClientes;
+
+      if (monto <= 0) {
+        printf("Error: El monto indicado debe ser mayor que 0.\n");
+        return;
+    }
 
     // Buscar el cliente según el número de cuenta
     while (actual != NULL) {
@@ -326,6 +338,11 @@ void transferencia(Nodo *listaClientes, int cuenta_origen, int cuenta_destino, d
     Nodo *actual = listaClientes;
     Nodo *cliente_origen = NULL;
     Nodo *cliente_destino = NULL;
+
+      if (monto <= 0) {
+        printf("Error: El monto indicado debe ser mayor que 0.\n");
+        return;
+    }
 
     
     while (actual != NULL) {
