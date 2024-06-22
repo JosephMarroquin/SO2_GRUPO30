@@ -1,0 +1,14 @@
+#! /usr/bin/stap
+
+probe syscall.mmap2 {
+    printf("PID:%-8d NOMBRE:%-20s LLAMADA:%-10s SIZE:%-10lu TIEMPO:%-s\n",
+            pid(), execname(), "mmap", length, ctime(gettimeofday_s())
+    )
+}
+
+
+probe syscall.munmap {
+    printf("PID:%-8d NOMBRE:%-20s LLAMADA:%-10s SIZE:%-10lu TIEMPO:%-s\n",
+            pid(), execname(), "munmap", length, ctime(gettimeofday_s())
+    )
+}
