@@ -1,0 +1,18 @@
+sudo systemctl start mysql
+sudo mysql -u root -p
+
+CREATE TABLE datos (
+    pid VARCHAR(100),
+    nombre VARCHAR(100),
+    llamada VARCHAR(100),
+    size VARCHAR(100),
+    fecha VARCHAR(100)
+);
+
+gcc  main.c -o main -lmysqlclient
+./main
+
+chmod u+x /home/jorge/Documentos/SO2_GRUPO30/Proyecto/trace.stp
+
+
+

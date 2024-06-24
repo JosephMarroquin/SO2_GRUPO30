@@ -22,9 +22,9 @@ int main() {
 	MYSQL_ROW row;
 
     char* server = "0.0.0.0";
-	char* user = "joseph";
+	char* user = "root";
 	char* password = "1234";
-	char* database = "pruebaso2";
+	char* database = "SO2P1";
 	
 	conn = mysql_init(NULL);
 
@@ -36,7 +36,7 @@ int main() {
 	}	
 
     // Ejecutar el script de SystemTap y capturar su salida
-    fp = popen("/home/joseph/Documents/Proyecto/trace.stp", "r");
+    fp = popen("/home/jorge/Documentos/SO2_GRUPO30/Proyecto/trace.stp", "r");
     if (fp == NULL) {
         perror("popen failed");
         return 1;

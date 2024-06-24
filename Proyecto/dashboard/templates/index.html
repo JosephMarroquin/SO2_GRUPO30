@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        table thead {
+            background-color: #f2f2f2;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        table tbody tr:hover {
+            background-color: #ddd;
+        }
+        .chart-container {
+            width: 50%;
+            margin: 20px auto;
+        }
+        #pieChart {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>PID</th>
+                <th>Nombre</th>
+                <th>Memoria</th>
+                <th>Porcentaje de Memoria</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <h2>Solicitudes Realizadas</h2>
+    <table id="calls-table">
+        <thead>
+            <tr>
+                <th>PID</th>
+                <th>Llamada</th>
+                <th>Tamaño</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('update_data', function(data) {
+            var table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
+            table.innerHTML = "";
+            data.forEach(function(item) {
+                var row = table.insertRow();
+                row.insertCell(0).innerHTML = item.pid;
+                row.insertCell(1).innerHTML = item.nombre;
+                row.insertCell(2).innerHTML = item.size;
+                row.insertCell(3).innerHTML = item.porcentaje_memoria;
+            });
+
+            // Gráfica de pie
+            var ctx = document.getElementById('pieChart').getContext('2d');
+            var pieData = {
+                labels: data.map(function(item) { return item.nombre; }).slice(0, 10),
+                datasets: [{
+                    data: data.map(function(item) { return item.size; }).slice(0, 10),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF5733', '#C70039', '#900C3F', '#581845', '#1ABC9C', '#2ECC71', '#3498DB']
+                }]
+            };
+            new Chart(ctx, {
+                type: 'pie',
+                data: pieData
+            });
+        });
+
+        function updateData() {
+            fetch('/api/datos')
+                .then(response => response.json())
+                .then(data => socket.emit('update_data', data));
+
+            fetch('/api/calls')
+                .then(response => response.json())
+                .then(data => {
+                    var table = document.getElementById("calls-table").getElementsByTagName('tbody')[0];
+                    table.innerHTML = "";
+                    data.forEach(function(item) {
+                        var row = table.insertRow();
+                        row.insertCell(0).innerHTML = item.pid;
+                        row.insertCell(1).innerHTML = item.llamada;
+                        row.insertCell(2).innerHTML = item.size;
+                        row.insertCell(3).innerHTML = item.fecha;
+                    });
+                });
+        }
+
+        setInterval(updateData, 3000); // Actualizar cada 3 segundos
+    </script>
+</body>
+</html>
