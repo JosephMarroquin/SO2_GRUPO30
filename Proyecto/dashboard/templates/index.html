@@ -81,9 +81,30 @@
         var socket = io.connect('http://' + document.domain + ':' + location.port);
 
         socket.on('update_data', function(data) {
+            // Ordenar datos por size de mayor a menor
+            data.sort((a, b) => b.size - a.size);
+
+            // Seleccionar los primeros 10 elementos
+            var topData = data.slice(0, 10);
+
+            // Calcular la suma de los valores restantes
+            var otrosTotal = 0;
+            for (var i = 10; i < data.length; i++) {
+                otrosTotal += data[i].size;
+            }
+
+            // Agregar el elemento "Otros" con la suma calculada
+            var otrosItem = {
+                nombre: "Otros",
+                size: otrosTotal,
+                porcentaje_memoria: null // Puedes dejarlo como null o calcularlo si es necesario
+            };
+            topData.push(otrosItem);
+
+            // Actualizar tabla #data-table
             var table = document.getElementById("data-table").getElementsByTagName('tbody')[0];
             table.innerHTML = "";
-            data.forEach(function(item) {
+            topData.forEach(function(item) {
                 var row = table.insertRow();
                 row.insertCell(0).innerHTML = item.pid;
                 row.insertCell(1).innerHTML = item.nombre;
@@ -91,19 +112,34 @@
                 row.insertCell(3).innerHTML = item.porcentaje_memoria;
             });
 
-            // Gráfica de pie
+            // Actualizar gráfica de pie #pieChart
             var ctx = document.getElementById('pieChart').getContext('2d');
             var pieData = {
-                labels: data.map(function(item) { return item.nombre; }).slice(0, 10),
+                labels: topData.map(function(item) { return item.nombre; }),
                 datasets: [{
-                    data: data.map(function(item) { return item.size; }).slice(0, 10),
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF5733', '#C70039', '#900C3F', '#581845', '#1ABC9C', '#2ECC71', '#3498DB']
+                    data: topData.map(function(item) { return item.size; }),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF5733', '#C70039', '#900C3F', '#581845', '#1ABC9C', '#2ECC71', '#3498DB', '#808080'] // Agrega un color para "Otros"
                 }]
             };
             new Chart(ctx, {
                 type: 'pie',
                 data: pieData
             });
+            
+            // Actualizar tabla #calls-table
+            var callsTable = document.getElementById("calls-table").getElementsByTagName('tbody')[0];
+            callsTable.innerHTML = "";
+            fetch('/api/calls')
+                .then(response => response.json())
+                .then(callsData => {
+                    callsData.forEach(function(item) {
+                        var row = callsTable.insertRow();
+                        row.insertCell(0).innerHTML = item.pid;
+                        row.insertCell(1).innerHTML = item.llamada;
+                        row.insertCell(2).innerHTML = item.size;
+                        row.insertCell(3).innerHTML = item.fecha;
+                    });
+                });
         });
 
         function updateData() {
@@ -111,6 +147,7 @@
                 .then(response => response.json())
                 .then(data => socket.emit('update_data', data));
 
+            // Actualizar tabla #calls-table
             fetch('/api/calls')
                 .then(response => response.json())
                 .then(data => {
